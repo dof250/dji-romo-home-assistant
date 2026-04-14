@@ -29,6 +29,13 @@ from .const import (
 from .mqtt import DjiRomoMqttClient
 
 _LOGGER = logging.getLogger(__name__)
+MEANINGFUL_STATE_KEYS = (
+    "battery_level",
+    "activity",
+    "status_text",
+    "cleaned_area",
+    "fan_speed",
+)
 
 
 @dataclass(slots=True)
@@ -184,9 +191,9 @@ class DjiRomoCoordinator(DataUpdateCoordinator[RomoSnapshot]):
 
     def _handle_mqtt_message(self, topic: str, payload: Any) -> None:
         """Parse a pushed MQTT message into a snapshot."""
-        snapshot = deepcopy(self.data) if self.data else RomoSnapshot()
+        previous = deepcopy(self.data) if self.data else RomoSnapshot()
+        snapshot = deepcopy(previous)
         snapshot.selected_topic = topic
-        snapshot.last_updated = datetime.now(UTC)
 
         if isinstance(payload, dict):
             snapshot.raw_state[topic] = payload
@@ -225,13 +232,33 @@ class DjiRomoCoordinator(DataUpdateCoordinator[RomoSnapshot]):
             )
             if status_text is not None:
                 snapshot.status_text = status_text
-            snapshot.activity = _infer_activity(flattened, snapshot.status_text)
+            snapshot.activity = _infer_activity(
+                flattened,
+                snapshot.status_text,
+                previous.activity,
+            )
         else:
             snapshot.raw_state[topic] = {"value": payload}
             snapshot.status_text = str(payload)
-            snapshot.activity = _infer_activity({}, snapshot.status_text)
+            snapshot.activity = _infer_activity(
+                {},
+                snapshot.status_text,
+                previous.activity,
+            )
 
+        if not _meaningful_state_changed(previous, snapshot):
+            return
+
+        snapshot.last_updated = datetime.now(UTC)
         self.async_set_updated_data(snapshot)
+
+
+def _meaningful_state_changed(previous: RomoSnapshot, current: RomoSnapshot) -> bool:
+    """Return True when a meaningful entity state changed."""
+    for key in MEANINGFUL_STATE_KEYS:
+        if getattr(previous, key) != getattr(current, key):
+            return True
+    return False
 
 
 def _flatten_dict(
@@ -284,7 +311,11 @@ def _coerce_float(value: Any) -> float | None:
         return None
 
 
-def _infer_activity(flattened: dict[str, Any], status_text: str | None) -> str:
+def _infer_activity(
+    flattened: dict[str, Any],
+    status_text: str | None,
+    previous_activity: str | None = None,
+) -> str:
     """Map loose status payloads to HA vacuum activities."""
     values = " ".join(
         str(value).lower()
@@ -303,4 +334,6 @@ def _infer_activity(flattened: dict[str, Any], status_text: str | None) -> str:
         term in values for term in ("clean", "cleaning", "sweep", "mop", "working")
     ):
         return "cleaning"
+    if previous_activity in {"docked", "returning", "paused", "cleaning"}:
+        return previous_activity
     return "idle"
