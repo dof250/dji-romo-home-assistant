@@ -116,7 +116,11 @@ class DjiRomoMqttClient:
         _properties: Any,
     ) -> None:
         """Handle MQTT connect callback."""
-        if int(reason_code) != 0:
+        is_failure = getattr(reason_code, "is_failure", None)
+        if is_failure is None:
+            is_failure = str(reason_code) not in {"Success", "0"}
+
+        if is_failure:
             _LOGGER.error("DJI Romo MQTT connect failed: %s", reason_code)
             return
 
