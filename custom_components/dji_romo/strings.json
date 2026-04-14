@@ -1,0 +1,39 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connect DJI Romo",
+        "description": "Use the user token extracted from the DJI Home app.",
+        "data": {
+          "user_token": "DJI user token",
+          "device_sn": "Device serial number",
+          "name": "Display name",
+          "locale": "Locale"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Could not connect to DJI Home.",
+      "invalid_json": "Invalid JSON."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Advanced settings",
+        "description": "Adjust MQTT topics or command mappings if DJI uses different method names on your robot.",
+        "data": {
+          "device_name": "Display name",
+          "api_url": "API base URL",
+          "locale": "Locale",
+          "command_topic": "MQTT command topic",
+          "subscription_topics": "MQTT subscription topics",
+          "command_mapping": "Command mapping JSON"
+        }
+      }
+    },
+    "error": {
+      "invalid_json": "Invalid JSON."
+    }
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "name": "DJI Romo",
+  "content_in_root": false,
+  "country": "NL",
+  "domains": [
+    "vacuum",
+    "sensor"
+  ],
+  "homeassistant": "2025.1.0",
+  "render_readme": true
+}
