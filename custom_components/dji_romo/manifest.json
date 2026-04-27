@@ -4,10 +4,10 @@
   "codeowners": [],
   "config_flow": true,
   "dependencies": [],
-  "documentation": "https://github.com/dof250/dji-romo-home-assistant",
+  "documentation": "https://github.com/JATD2020/dji-romo-home-assistant",
   "integration_type": "device",
   "iot_class": "cloud_push",
-  "issue_tracker": "https://github.com/dof250/dji-romo-home-assistant/issues",
+  "issue_tracker": "https://github.com/JATD2020/dji-romo-home-assistant/issues",
   "requirements": [
     "paho-mqtt>=2.1.0"
   ],
