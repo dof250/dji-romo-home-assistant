@@ -16,22 +16,22 @@ from .const import DOMAIN
 from .coordinator import DjiRomoCoordinator
 from .entity import DjiRomoCoordinatorEntity
 
-ROOM_LABELS_NL = {
-    1: "Slaapkamer",
-    2: "Logeerkamer",
-    3: "Keuken",
-    4: "Eetkamer",
-    5: "Studeerkamer",
-    6: "Woonkamer",
-    7: "Gang",
-    8: "Berging",
-    9: "Balkon",
-    10: "Wasruimte",
-    11: "Kast",
-    12: "Kantoor",
-    13: "Entree",
-    14: "Badkamer",
-    15: "Kinderkamer",
+ROOM_LABELS = {
+    1: "Bedroom",
+    2: "Guest Room",
+    3: "Kitchen",
+    4: "Dining Room",
+    5: "Study",
+    6: "Living Room",
+    7: "Hallway",
+    8: "Storage",
+    9: "Balcony",
+    10: "Laundry Room",
+    11: "Closet",
+    12: "Office",
+    13: "Entrance",
+    14: "Bathroom",
+    15: "Kids Room",
 }
 
 PLAN_NAME_TRANSLATIONS = {
@@ -273,4 +273,4 @@ def _room_name(room_config: dict[str, Any]) -> str:
         label_id = int(label)
     except (TypeError, ValueError):
         label_id = 0
-    return ROOM_LABELS_NL.get(label_id, f"Kamer {room_config.get('poly_index')}")
+    return ROOM_LABELS.get(label_id, f"Room {room_config.get('poly_index')}")
