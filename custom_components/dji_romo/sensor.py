@@ -17,27 +17,27 @@ from .coordinator import DjiRomoCoordinator
 from .entity import DjiRomoCoordinatorEntity
 
 CLEAN_MODE_LABELS = {
-    0: "Stofzuigen en dweilen",
-    1: "Eerst stofzuigen dan dweilen",
-    2: "Alleen stofzuigen",
-    3: "Alleen dweilen",
+    0: "Vacuum and Mop",
+    1: "Vacuum then Mop",
+    2: "Vacuum Only",
+    3: "Mop Only",
     4: "Super clean",
 }
 FAN_SPEED_LABELS = {
-    1: "Stil",
-    2: "Standaard",
+    1: "Quiet",
+    2: "Standard",
     3: "Max",
 }
 WATER_LEVEL_LABELS = {
-    1: "Laag",
-    2: "Middel",
-    3: "Hoog",
+    1: "Low",
+    2: "Medium",
+    3: "High",
 }
 CLEAN_SPEED_LABELS = {
-    0: "Niet van toepassing",
-    1: "Langzaam",
-    2: "Standaard",
-    3: "Snel",
+    0: "Not Applicable",
+    1: "Slow",
+    2: "Standard",
+    3: "Fast",
 }
 
 
@@ -59,7 +59,7 @@ SENSORS: tuple[DjiRomoSensorDescription, ...] = (
     ),
     DjiRomoSensorDescription(
         key="current_cleaning_mode",
-        name="Actuele Schoonmaakmodus",
+        name="Current Cleaning Mode",
         value_fn=lambda coordinator: _label(
             coordinator.data.clean_mode,
             CLEAN_MODE_LABELS,
@@ -71,7 +71,7 @@ SENSORS: tuple[DjiRomoSensorDescription, ...] = (
     ),
     DjiRomoSensorDescription(
         key="current_suction_power",
-        name="Actuele Zuigkracht",
+        name="Current Suction Power",
         value_fn=lambda coordinator: _label(
             coordinator.data.fan_speed,
             FAN_SPEED_LABELS,
@@ -83,7 +83,7 @@ SENSORS: tuple[DjiRomoSensorDescription, ...] = (
     ),
     DjiRomoSensorDescription(
         key="current_water_level",
-        name="Actueel Waterniveau",
+        name="Current Water Level",
         value_fn=lambda coordinator: _label(
             coordinator.data.water_level,
             WATER_LEVEL_LABELS,
@@ -95,12 +95,12 @@ SENSORS: tuple[DjiRomoSensorDescription, ...] = (
     ),
     DjiRomoSensorDescription(
         key="current_cleaning_passes",
-        name="Actuele Schoonmaakrondes",
+        name="Current Cleaning Passes",
         value_fn=lambda coordinator: coordinator.data.clean_num,
     ),
     DjiRomoSensorDescription(
         key="current_mopping_speed",
-        name="Actuele Dweilsnelheid",
+        name="Current Mopping Speed",
         value_fn=lambda coordinator: _label(
             coordinator.data.clean_speed,
             CLEAN_SPEED_LABELS,

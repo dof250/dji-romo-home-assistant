@@ -22,7 +22,7 @@ class DjiRomoNumberDescription(NumberEntityDescription):
 NUMBERS: tuple[DjiRomoNumberDescription, ...] = (
     DjiRomoNumberDescription(
         key=CONF_ROOM_CLEAN_NUM,
-        name="Kamer Schoonmaakrondes",
+        name="Room Cleaning Passes",
         icon="mdi:counter",
         native_min_value=1,
         native_max_value=3,

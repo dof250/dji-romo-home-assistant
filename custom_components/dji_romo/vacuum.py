@@ -22,8 +22,8 @@ from .coordinator import DjiRomoCoordinator
 from .entity import DjiRomoCoordinatorEntity
 
 FAN_SPEED_OPTIONS = {
-    1: "Stil",
-    2: "Standaard",
+    1: "Quiet",
+    2: "Standard",
     3: "Max",
 }
 

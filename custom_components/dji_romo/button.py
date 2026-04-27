@@ -35,24 +35,24 @@ ROOM_LABELS = {
 }
 
 PLAN_NAME_TRANSLATIONS = {
-    "default_plan_name_quick": "Grondige enkele stofzuigbeurt",
-    "精细单扫": "Grondige enkele stofzuigbeurt",
+    "default_plan_name_quick": "Detailed Single Vacuum",
+    "精细单扫": "Detailed Single Vacuum",
 }
 
 DOCK_ACTIONS = (
     {
         "key": "dust_collect",
-        "name": "Stof verzamelen",
+        "name": "Dust Collection",
         "icon": "mdi:delete-sweep",
     },
     {
         "key": "wash_mop_pads",
-        "name": "Dweilpads reinigen",
+        "name": "Wash Mop Pads",
         "icon": "mdi:waves",
     },
     {
         "key": "dry_mop_pads",
-        "name": "Dweilpads drogen",
+        "name": "Dry Mop Pads",
         "icon": "mdi:fan",
     },
 )
