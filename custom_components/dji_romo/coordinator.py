@@ -5,7 +5,7 @@ from __future__ import annotations
 import asyncio
 from copy import deepcopy
 from dataclasses import dataclass, field
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 import logging
 from typing import Any
 from uuid import uuid4
@@ -38,6 +38,8 @@ from .mqtt import DjiRomoMqttClient
 
 _LOGGER = logging.getLogger(__name__)
 AUTH_REPAIR_ISSUE_ID = "auth_failed"
+ACTIVITY_CONFIRMATION_COUNT = 2
+ACTIVITY_HOLD_DURATION = timedelta(seconds=20)
 DEFAULT_ROOM_CLEANING_OPTIONS = {
     CONF_ROOM_CLEAN_MODE: 2,
     CONF_ROOM_FAN_SPEED: 3,
@@ -104,6 +106,10 @@ class DjiRomoCoordinator(DataUpdateCoordinator[RomoSnapshot]):
         self.device_info_payload: dict[str, Any] = {}
         self._mqtt_credentials: DjiMqttCredentials | None = None
         self._mqtt = DjiRomoMqttClient(hass.loop, self._handle_mqtt_message)
+        self._pending_activity: str | None = None
+        self._pending_activity_count = 0
+        self._held_activity: str | None = None
+        self._activity_hold_until: datetime | None = None
 
     async def _async_update_data(self) -> RomoSnapshot:
         """Refresh cloud metadata and keep the MQTT session healthy."""
@@ -483,20 +489,34 @@ class DjiRomoCoordinator(DataUpdateCoordinator[RomoSnapshot]):
                 )
                 if status_text is not None:
                     snapshot.status_text = status_text
-                snapshot.activity = _infer_property_activity(
+                candidate_activity = _infer_property_activity(
                     flattened,
                     snapshot.status_text,
                     previous.activity,
                 )
+                snapshot.activity = self._stable_activity(
+                    previous.activity,
+                    candidate_activity,
+                    source="property",
+                )
             elif topic_kind == "events":
                 event_activity = _infer_event_activity(flattened, previous.activity)
                 if event_activity is not None:
-                    snapshot.activity = event_activity
+                    snapshot.activity = self._stable_activity(
+                        previous.activity,
+                        event_activity,
+                        source="events",
+                    )
         else:
             snapshot.raw_state[topic] = {"value": payload}
             snapshot.status_text = str(payload)
-            snapshot.activity = _infer_property_activity(
+            candidate_activity = _infer_property_activity(
                 {}, snapshot.status_text, previous.activity
+            )
+            snapshot.activity = self._stable_activity(
+                previous.activity,
+                candidate_activity,
+                source="other",
             )
 
         if not _meaningful_state_changed(previous, snapshot):
@@ -504,6 +524,59 @@ class DjiRomoCoordinator(DataUpdateCoordinator[RomoSnapshot]):
 
         snapshot.last_updated = datetime.now(UTC)
         self.async_set_updated_data(snapshot)
+
+    def _stable_activity(
+        self,
+        previous_activity: str,
+        candidate_activity: str,
+        *,
+        source: str,
+    ) -> str:
+        """Avoid publishing short-lived activity flips from mixed MQTT sources."""
+        now = datetime.now(UTC)
+
+        if source == "events" and candidate_activity in {"paused", "returning"}:
+            self._held_activity = candidate_activity
+            self._activity_hold_until = now + ACTIVITY_HOLD_DURATION
+
+        if (
+            self._held_activity
+            and self._activity_hold_until
+            and now < self._activity_hold_until
+        ):
+            if candidate_activity == self._held_activity:
+                self._pending_activity = None
+                self._pending_activity_count = 0
+            elif source == "property" and candidate_activity in {"docked", "error"}:
+                self._held_activity = None
+                self._activity_hold_until = None
+            else:
+                return self._held_activity
+
+        if candidate_activity == previous_activity:
+            self._pending_activity = None
+            self._pending_activity_count = 0
+            return candidate_activity
+
+        if candidate_activity in {"docked", "error"}:
+            self._pending_activity = None
+            self._pending_activity_count = 0
+            self._held_activity = None
+            self._activity_hold_until = None
+            return candidate_activity
+
+        if candidate_activity == self._pending_activity:
+            self._pending_activity_count += 1
+        else:
+            self._pending_activity = candidate_activity
+            self._pending_activity_count = 1
+
+        if self._pending_activity_count >= ACTIVITY_CONFIRMATION_COUNT:
+            self._pending_activity = None
+            self._pending_activity_count = 0
+            return candidate_activity
+
+        return previous_activity
 
 
 def _meaningful_state_changed(previous: RomoSnapshot, current: RomoSnapshot) -> bool:
